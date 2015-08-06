@@ -8,12 +8,8 @@
             [load-test-service.db :as db])
   (:gen-class))
 
-;(defn create-load-test-result []
-;  (let [id (str (java.util.UUID/randomUUID))]
-;    {::id id }))
-
 (defn create-load-test-result [params]
-  (db/insert params))
+  (str (:_id (db/insert params))))
 
 (defn get-load-test-result [id]
   (db/find-by-id id))
@@ -21,7 +17,8 @@
 (defresource load-test-result-entry []
              :available-media-types ["application/edn"]
              :allowed-methods [:post]
-             :post! (fn [ctx] (create-load-test-result (get-in ctx [:request :body-params])))
+             :post! (fn [ctx]
+                      {::id (create-load-test-result (get-in ctx [:request :body-params]))})
              :post-redirect? (fn [ctx] {:location (format "/result/%s" (::id ctx))}))
 
 (defresource load-test-result-entry-resource [id]
