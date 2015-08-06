@@ -1,20 +1,27 @@
 (ns load-test-service.core
   (:require [liberator.core :refer [resource defresource]]
             [ring.middleware.params :refer [wrap-params]]
-            [compojure.core :refer [defroutes ANY]])
+            [compojure.core :refer [defroutes ANY]]
+            [clojure.java.io :as io]
+            [liberator.dev :refer [wrap-trace]]
+            [ring.middleware.format :refer [wrap-restful-format]]
+            [load-test-service.db :as db])
   (:gen-class))
 
-(defn create-load-test-result []
-  (let [id (str (java.util.UUID/randomUUID))]
-    {::id id }))
+;(defn create-load-test-result []
+;  (let [id (str (java.util.UUID/randomUUID))]
+;    {::id id }))
+
+(defn create-load-test-result [params]
+  (db/insert params))
 
 (defn get-load-test-result [id]
   {:id id})
 
 (defresource load-test-result-entry []
-             :available-media-types ["text/plain"]
+             :available-media-types ["application/edn"]
              :allowed-methods [:post]
-             :post! (fn [ctx] (create-load-test-result))
+             :post! (fn [ctx] (create-load-test-result (get-in ctx [:request :body-params])))
              :post-redirect? (fn [ctx] {:location (format "/result/%s" (::id ctx))}))
 
 (defresource load-test-result-entry-resource [id]
@@ -28,4 +35,6 @@
 
 (def handler
   (-> app
-      wrap-params))
+      wrap-params
+      (wrap-trace :header :ui)
+      (wrap-restful-format)))
