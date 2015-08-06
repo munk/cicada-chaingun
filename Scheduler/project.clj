@@ -4,7 +4,8 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [edpaget/clj-mesos "0.22.1-SNAPSHOT"]]
+                 [spootnik/mesomatic "0.23.0-r0"]
+                 [spootnik/mesomatic-async "0.23.0-r0"]]
   :main ^:skip-aot scheduler.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
