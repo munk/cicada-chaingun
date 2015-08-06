@@ -17,7 +17,7 @@
                                   (for [r (range runs)]
                                     (binding [*thread-number* t
                                               *run-number* r]
-                                      (:request-time (f))))))))]
+                                      (f)))))))]
                 (go (doseq [result results] (<!! result)))))]
     `(~run ~params (fn [] ~@body))))
 
