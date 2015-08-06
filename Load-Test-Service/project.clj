@@ -1,8 +1,8 @@
 (defproject load-test-service "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :url "https://github.com/yodle/cicada-chaingun.git"
+  :license {:name "Apache License 2.0"
+            :url "http://www.apache.org/licenses/LICENSE-2.0.txt"}
   :plugins [[lein-ring "0.9.6"]]
   :ring { :handler load-test-service.core/handler}
   :dependencies [[org.clojure/clojure "1.7.0"]
