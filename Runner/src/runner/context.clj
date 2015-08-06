@@ -1,7 +1,5 @@
 (ns runner.context
-  (:require [clojure.core.async :refer [thread <!!]]
-            [clojure.edn :as edn]
-            [clj-http.client :as http]))
+  (:require [clojure.core.async :refer [go thread <!!]]))
 
 (defmacro load-test [params & body]
   (let [defaults {:threads 10 :runs 10 :delay 0}
@@ -13,5 +11,5 @@
                                  (doall 
                                   (for [r (range runs)]
                                     (:request-time (f t r)))))))]
-                (doseq [result results] (println (<!! result)))))]
+                (go (doseq [result results] (println (<!! result))))))]
     `(~run ~params (fn [~'thread-number ~'run-number] ~@body))))
