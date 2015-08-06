@@ -1,0 +1,2 @@
+(load-test {:threads 2 :runs 2}
+           (http/get "http://www.yodle.com"))
