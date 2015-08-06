@@ -16,7 +16,7 @@
   (db/insert params))
 
 (defn get-load-test-result [id]
-  {:id id})
+  (db/find-by-id id))
 
 (defresource load-test-result-entry []
              :available-media-types ["application/edn"]
