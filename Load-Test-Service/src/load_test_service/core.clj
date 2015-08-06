@@ -5,7 +5,8 @@
             [clojure.java.io :as io]
             [liberator.dev :refer [wrap-trace]]
             [ring.middleware.format :refer [wrap-restful-format]]
-            [load-test-service.db :as db])
+            [load-test-service.db :as db]
+            [org.httpkit.server :refer [run-server]])
   (:gen-class))
 
 (defn create-load-test-result [params]
@@ -29,6 +30,11 @@
 (defroutes app
   (ANY "/result" [] (load-test-result-entry))
   (ANY "/result/:id" [id] (load-test-result-entry-resource id)))
+
+(defn -main []
+      (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
+           (run-server app {:port port})
+           (println (str "Listening on port " port))))
 
 (def handler
   (-> app

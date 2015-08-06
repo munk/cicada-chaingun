@@ -3,7 +3,7 @@
             [monger.collection :as mc])
   (:import org.bson.types.ObjectId))
 
-(defonce conn (mg/connect))
+(defonce conn (mg/connect {:host "dev-mongodb1.dev.yodle.com"}))
 
 (defn insert [result]
   (let [db (mg/get-db conn "load-test")]
