@@ -1,13 +1,14 @@
 (ns runner.context
   (:require [clojure.core.async :refer [go thread <!!]]
             [clj-http.client :as http]
-            [runner.reporting :refer [log-result]]))
+            [runner.reporting :as reporting]))
 
 (def ^:dynamic *thread-number*)
 (def ^:dynamic *run-number*)
 
 (defn- run-load-test
   [f {:keys [threads runs] :or {threads 10 runs 10}}]
+  (reporting/add-expected-runs (* threads runs))
   (let [results (doall
                  (for [t (range threads)]
                    (thread
@@ -28,7 +29,7 @@
                 (merge {:url (first args)
                         :thread *thread-number*
                         :run *run-number*})
-                log-result)))]
+                (reporting/log-result))))]
   (def GET (wrap http/get))
   (def PUT (wrap http/put))
   (def POST (wrap http/post))
