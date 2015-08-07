@@ -1,6 +1,7 @@
-(load-test {:threads 10 :runs 50}
-           (GET (rand-nth ["http://clojure.org/"
-                           "http://golang.org/"
-                           "http://www.haskell.org/"
-                           "http://www.python.org/"
-                           "http://www.scala-lang.org/"])))
+(load-test :runs 50
+ (let [urls ["http://clojure.org/"
+             "http://golang.org/"
+             "http://www.haskell.org/"
+             "http://www.python.org/"
+             "http://www.scala-lang.org/"]]
+   (GET (rand-nth urls))))

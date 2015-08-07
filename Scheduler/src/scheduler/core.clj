@@ -1,27 +1,25 @@
 (ns scheduler.core
-  (:require [clojure.core.async :refer [put! close! reduce chan]]
+  (:require [clojure.core.async :as async :refer [alts!! timeout put! close! chan]]
             [mesomatic.scheduler :as sched]
             [mesomatic.types :as mtypes]
-            [mesomatic.async.scheduler :as async]
-            )
+            [mesomatic.async.scheduler :as masync]
+            [liberator.core :refer [resource defresource]]
+            [compojure.core :refer [defroutes ANY]]
+            [clojure.java.io :as io]
+            [liberator.dev :refer [wrap-trace]]
+            [ring.middleware.format :refer [wrap-restful-format]])
   (:gen-class))
 
-(def driver (atom nil))
+(def task-channel (chan 10))
 
 (defmulti handle-message (fn [_ message] (:type message)))
 
 (defmethod handle-message :registered
-  [response _]
-  (println "Registered:" (:driver response))
-  (let [new-driver (:driver response)]
-    (println "New driver " new-driver)
-    (swap! driver (fn [_] new-driver))
-    (println driver)))
+  [state _]
+  (println "Registered:" state)
+  state)
 
-(defmethod handle-message :resource-offers
-  [message {:keys [offers]}]
-  (println "Offers Driver" driver)
-  (println "Offers: " offers)
+(defn foo [driver offers]
   (let [offer (first offers)
         new-offer (mtypes/->Offer (:id offer) (:framework-id offer) (:slave-id offer) (:hostname offer) (:resources offer) (:attributes offer) (:executor-ids offer))
         slave-id (:slave-id offers)
@@ -33,21 +31,51 @@
         volume (mtypes/->Volume "/cicaida" "/cicaida" :volume-rw)
         container-info (mtypes/->ContainerInfo :container-type-docker  [volume] "cicaida1" docker-info)
         task-info (mtypes/->TaskInfo "cicaida-chaingun" task-id slave-id [cpu-resource mem-resource] "docker" "echo hai" container-info [] [] [] [])]
-    (sched/launch-tasks! (deref driver) new-offer [task-info])))
+    (sched/launch-tasks! driver new-offer [task-info])))
+
+(defmethod handle-message :resource-offers
+  [{:keys [driver] :as state} {:keys [offers]}]
+  (loop []
+    (let [[task _] (alts!! [task-channel (timeout 50)])]
+      (if task
+        (do
+          (println "submitting task:" task)
+          (foo driver offers)
+          (recur))
+        (do
+          (println "no tasks")
+          (sched/decline-offer driver (-> offers first :id))))))
+  (println "Offers: " offers)
+   state)
 
 (defmethod handle-message :default
   [state message]
-  (println "wtf:" message))
+  (println "wtf:" message)
+   state)
+
+(defresource submit-task []
+             :available-media-types ["application/edn"]
+             :allowed-methods [:post]
+             :post! (fn [ctx]
+                      (async/>!! task-channel (get-in ctx [:request :body-params]))))
+
+(defroutes app
+  (ANY "/task" [] (submit-task)))
+
+(def handler
+  (-> app
+      (wrap-trace :header :ui)
+      (wrap-restful-format)))
 
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
 
   (let [ch (chan)
-        sched (async/scheduler ch)
-        framework {:name "cicada-chaingun-jd"}
-        driver (sched/scheduler-driver sched framework "10.100.18.170:5050")]
+        sched (masync/scheduler ch)
+        framework {:name "cicada-chaingun"}
+        driver (sched/scheduler-driver sched framework "10.100.18.65:5050")]
     (sched/start! driver)
-    (reduce handle-message {:driver driver} ch)
+    (async/reduce handle-message {:driver driver} ch)
     (while true
       (Thread/sleep 1000))))

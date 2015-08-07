@@ -1,10 +1,16 @@
 (ns runner.reporting)
 
-(def results (atom []))
+(defonce report 
+  (atom {:expected-runs 0
+         :results []}))
+
+(defn add-expected-runs [n]
+  (swap! report update-in [:expected-runs] + n))
 
 (defn log-result [r]
-  (swap! results conj r))
+  (swap! report update-in [:results] conj r))
 
-(defn get-results []
-  (deref results))
-
+(defn get-report []
+  (let [snapshot @report]
+    (assoc snapshot :completed-runs 
+           (count (:results snapshot)))))
