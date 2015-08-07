@@ -2,7 +2,6 @@
   (:require [liberator.core :refer [resource defresource]]
             [ring.middleware.params :refer [wrap-params]]
             [compojure.core :refer [defroutes ANY]]
-            [clojure.java.io :as io]
             [liberator.dev :refer [wrap-trace]]
             [ring.middleware.format :refer [wrap-restful-format]]
             [load-test-service.db :as db]
