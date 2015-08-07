@@ -1,6 +1,4 @@
-(load-test 
- :threads 10
- :runs 30
+(load-test :threads 20 :runs 30
  (let [urls ["http://www.yodle.com/success-stories"
              "http://www.yodle.com/marketing-essentials"
              "http://www.yodle.com/brand-networks"]]
