@@ -7,7 +7,7 @@
             [liberator.core :refer [resource]]
             [org.httpkit.server :refer [run-server]]
             [compojure.core :refer [defroutes ANY POST]]
-            [runner.reporting :refer [get-results]])
+            [runner.reporting :refer [get-report]])
   (:gen-class))
 
 (defonce server (atom nil))
@@ -24,9 +24,9 @@
 (defn handle-post-load-test [context]
   (-> context :request :body slurp edn/read-string run-load-test))
 
-(defn handle-get-load-test-results [context]
+(defn handle-get-load-test-report [context]
   (let [w (StringWriter.)]
-    (pprint (get-results) w)
+    (pprint (get-report) w)
     (.toString w)))
 
 (defn stop-server! []
@@ -38,7 +38,7 @@
   (ANY "/load-test" [] (resource :allowed-methods [:get :post]
                                  :available-media-types ["application/edn"]
                                  :post! handle-post-load-test
-                                 :handle-ok handle-get-load-test-results))
+                                 :handle-ok handle-get-load-test-report))
   (POST "/shutdown" [] (resource :allowed-methods [:post]
                                  :available-media-types ["application/edn"]
                                  :post! (fn [_]

@@ -1,2 +1,1 @@
-(load-test {:threads 2 :runs 2}
-           (GET "http://www.yodle.com"))
+(load-test (GET "http://www.yodle.com"))
