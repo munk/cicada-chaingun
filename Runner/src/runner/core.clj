@@ -3,9 +3,10 @@
   (:require [clojure.edn :as edn]
             [clojure.java.io :as io]
             [clojure.pprint :refer [pprint]]
+            [clojure.core.async :refer [thread]]
             [liberator.core :refer [resource]]
             [org.httpkit.server :refer [run-server]]
-            [compojure.core :refer [defroutes ANY]]
+            [compojure.core :refer [defroutes ANY POST]]
             [runner.reporting :refer [get-results]])
   (:gen-class))
 
@@ -28,26 +29,35 @@
     (pprint (get-results) w)
     (.toString w)))
 
-(defroutes app
-  (ANY "/load-test" [] (resource :allowed-methods [:get :post]
-                                 :available-media-types ["application/edn"]
-                                 :post! handle-post-load-test
-                                 :handle-ok handle-get-load-test-results)))
-
-;; The following three functions are meant to facilitate interactive development
 (defn stop-server! []
   (when-not (nil? @server)
     (@server :timeout 100)
     (reset! server nil)))
 
-(defn start-server! []
-  (let [port (Integer/parseInt (or (System/getenv "PORT_LOCAL") "3000"))]
-    (reset! server (run-server app {:port port :join? false}))
-    (println "Load test runner listening on port" port)))
+(defroutes app
+  (ANY "/load-test" [] (resource :allowed-methods [:get :post]
+                                 :available-media-types ["application/edn"]
+                                 :post! handle-post-load-test
+                                 :handle-ok handle-get-load-test-results))
+  (POST "/shutdown" [] (resource :allowed-methods [:post]
+                                 :available-media-types ["application/edn"]
+                                 :post! (fn [_]
+                                          (println "Shutting down...")
+                                          (thread 
+                                            (Thread/sleep 100)
+                                            (stop-server!))))))
 
+(defn start-server! []
+  (when (nil? @server)
+    (let [port (Integer/parseInt (or (System/getenv "PORT_LOCAL") "3000"))]
+      (reset! server (run-server app {:port port :join? false}))
+      (println "Load test runner listening on port" port))))
+
+(defn -main [& args]
+  (start-server!))
+
+;; To facilitate interactive development
 (defn reset-server! []
   (stop-server!)
   (start-server!))
 
-(defn -main [& args]
-  (start-server!))
