@@ -11,4 +11,6 @@
                  [http-kit "2.1.18"]]
   :main ^:skip-aot runner.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :uberjar-name "cicada-chaingun-runner.jar"
+  :profiles {:uberjar {:aot :all
+                       :omit-source true}})

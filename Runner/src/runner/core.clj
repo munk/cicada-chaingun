@@ -6,7 +6,8 @@
             [liberator.core :refer [resource]]
             [org.httpkit.server :refer [run-server]]
             [compojure.core :refer [defroutes ANY]]
-            [runner.reporting :refer [get-results]]))
+            [runner.reporting :refer [get-results]])
+  (:gen-class))
 
 (defonce server (atom nil))
 
