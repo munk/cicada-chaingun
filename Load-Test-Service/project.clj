@@ -11,7 +11,8 @@
                  [ring/ring-core "1.4.0"]
                  [com.novemberain/monger "3.0.0"]
                  [ring-middleware-format "0.5.0"]
-                 [http-kit "2.1.16"]]
+                 [http-kit "2.1.16"]
+                 [incanter/incanter-core "1.5.6"]]
   :main ^:skip-aot load-test-service.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
