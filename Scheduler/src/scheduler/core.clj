@@ -6,19 +6,30 @@
             )
   (:gen-class))
 
+(def driver (atom ()))
+
 (defmulti handle-message (fn [_ message] (:type message)))
 
 (defmethod handle-message :registered
-  [driver _]
-  (println "Registered:" (:driver driver)))
+  [response _]
+  (println "Registered:" (:driver response))
+  (swap! driver (:driver response)))
 
 (defmethod handle-message :resource-offers
-  [state {:keys [offers]}]
+  [driver {:keys [offers]}]
+  (println "Offers Driver" driver)
   (println "Offers: " offers)
-  (let [task-id (mtypes/TaskId. 1)
-        container-info (mtypes/)
-        ])
-  )
+  (let [offer (first offers)
+        slave-id (:slave-id offers)
+        cpu-resource (mtypes/->Resource "cpus" :value-scalar 1 [] nil nil)
+        mem-resource (mtypes/->Resource "mem" :value-scalar 128 [] nil nil)
+        task-id (mtypes/->TaskID 1)
+        port-mapping (mtypes/->PortMapping 80 8080 "http")
+        docker-info (mtypes/->DockerInfo "ubuntu" :docker-network-bridge port-mapping false [])
+        volume (mtypes/->Volume "/cicaida" "/cicaida" :volume-rw)
+        container-info (mtypes/->ContainerInfo :container-type-docker  [volume] "cicaida1" docker-info)
+        task-info (mtypes/->TaskInfo "cicaida-chaingun" task-id [cpu-resource mem-resource] nil nil container-info nil nil nil nil nil)]
+    (sched/launch-tasks! (:driver driver) (:id offer) [task-info] nil)))
 
 (defmethod handle-message :default
   [state message]
@@ -30,8 +41,8 @@
 
   (let [ch (chan)
         sched (async/scheduler ch)
-        framework {:name "cicada-chaingun"}
-        driver (sched/scheduler-driver sched framework "10.100.17.164:5050")]
+        framework {:name "cicada-chaingun-jd"}
+        driver (sched/scheduler-driver sched framework "dev-sandbox-mesos-master1.nyc.dev.yodle.com:5050")]
     (sched/start! driver)
     (reduce handle-message {:driver driver} ch)
     (while true
