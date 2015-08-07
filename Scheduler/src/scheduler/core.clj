@@ -5,8 +5,6 @@
             [mesomatic.async.scheduler :as masync])
   (:gen-class))
 
-(def task-channel (chan 10))
-
 (defmulti handle-message (fn [_ message] (:type message)))
 
 (defmethod handle-message :registered
@@ -15,7 +13,7 @@
    driver)
 
 (defmethod handle-message :resource-offers
-  [{:keys [driver] :as state} {:keys [offers]}]
+  [{:keys [driver task-channel] :as state} {:keys [offers]}]
   (loop []
     (let [[task _] (alts!! [task-channel (timeout 50)])]
       (if task
@@ -38,10 +36,11 @@
   [& args]
 
   (let [ch (chan)
+        task-channel (chan 10)
         sched (masync/scheduler ch)
         framework {:name "cicada-chaingun"}
         driver (sched/scheduler-driver sched framework "10.100.25.110:5050")]
     (sched/start! driver)
-    (async/reduce handle-message {:driver driver} ch)
+    (async/reduce handle-message {:driver driver :task-channel task-channel} ch)
     (while true
       (Thread/sleep 1000))))
