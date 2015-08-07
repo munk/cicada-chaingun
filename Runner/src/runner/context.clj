@@ -19,8 +19,17 @@
                           (f)))))))]
     (go (doseq [result results] (<!! result)))))
 
-(defmacro load-test [params & body]
-  `(~run-load-test (fn [] ~@body) ~params))
+(defn- split-params-and-body [args]
+  (reduce (fn [[params body] part]
+            (if (keyword? (first part))
+              [(assoc params (first part) (second part)) body]
+              [params (concat body part)]))
+          [{} '()]
+          (partition-all 2 args)))
+
+(defmacro load-test [& args]
+  (let [[params body] (split-params-and-body args)]
+    `(~run-load-test (fn [] ~@body) ~params)))
 
 (letfn [(wrap [f]
           (fn [& args]
