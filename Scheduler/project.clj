@@ -7,7 +7,11 @@
                  [spootnik/mesomatic "0.23.0-r0"]
                  [spootnik/mesomatic-async "0.23.0-r0"]
                  [http-kit "2.1.18"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+                 [liberator "0.13"]
+                 [compojure "1.4.0"]
+                 [ring/ring-core "1.4.0"]
+                 [ring-middleware-format "0.5.0"]]
   :main ^:skip-aot scheduler.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
