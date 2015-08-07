@@ -5,9 +5,9 @@
             [mesomatic.async.scheduler :as masync]
             [liberator.core :refer [resource defresource]]
             [compojure.core :refer [defroutes ANY]]
-            [clojure.java.io :as io]
             [liberator.dev :refer [wrap-trace]]
-            [ring.middleware.format :refer [wrap-restful-format]])
+            [ring.middleware.params :refer [wrap-params]]
+            [org.httpkit.server :refer [run-server]])
   (:gen-class))
 
 (def task-channel (chan 10))
@@ -57,15 +57,17 @@
              :available-media-types ["application/edn"]
              :allowed-methods [:post]
              :post! (fn [ctx]
-                      (async/>!! task-channel (get-in ctx [:request :body-params]))))
+                      (let [message (slurp (get-in ctx [:request :body]))]
+                        (if message
+                          (async/>!! task-channel message)))))
 
 (defroutes app
   (ANY "/task" [] (submit-task)))
 
 (def handler
   (-> app
-      (wrap-trace :header :ui)
-      (wrap-restful-format)))
+      wrap-params
+      (wrap-trace :header :ui)))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -77,5 +79,8 @@
         driver (sched/scheduler-driver sched framework "10.100.18.65:5050")]
     (sched/start! driver)
     (async/reduce handle-message {:driver driver} ch)
-    (while true
-      (Thread/sleep 1000))))
+
+    (let [port (Integer/parseInt (or (System/getenv "PORT") "3001"))]
+      (run-server app {:port port})
+      (println (str "Listening on port " port)))))
+
